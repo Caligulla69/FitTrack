@@ -1,43 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Send,
-  Menu,
-  X,
-  User,
-  Settings,
-  LogOut,
-  Bell,
-  ChevronDown,
-  Sparkles,
-  Clock,
-  ThumbsUp,
-  ThumbsDown,
-  Copy,
-  RotateCcw,
-  Home,
-  MessageSquare,
-  BarChart3,
-  Utensils,
-  Dumbbell,
-  Target,
-  Flame,
-  Apple,
-  TrendingUp
-} from 'lucide-react';
+import { Send, Plus, Menu, Search, Library, FolderOpen, Apple, Clock, TrendingUp, Heart, Utensils, X, Mic, Volume2 } from 'lucide-react';
 
-export default function FitnessChatbot() {
+export default function NutriGenieChat() {
   const [messages, setMessages] = useState([
-    {
-      id: 1,
-      type: 'bot',
-      content: "Hi there! I'm your AI fitness coach. I can help you with meal planning, nutrition advice, workout suggestions, and tracking your fitness goals. What would you like to know?",
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }
+    { role: 'assistant', content: 'Hello, How can I help you?' },
+    { role: 'user', content: 'What should I eat for a healthy breakfast?' },
+    { role: 'assistant', content: 'For a healthy breakfast, consider oatmeal with berries, Greek yogurt with nuts, or whole grain toast with avocado and eggs.' }
   ]);
-  const [inputValue, setInputValue] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -48,337 +21,306 @@ export default function FitnessChatbot() {
     scrollToBottom();
   }, [messages]);
 
-  const sidebarItems = [
-    { icon: Home, label: 'Dashboard' },
-    { icon: MessageSquare, label: 'Chat', active: true },
-    { icon: Utensils, label: 'Meals' },
-    { icon: Dumbbell, label: 'Workouts' },
-    { icon: BarChart3, label: 'Progress' },
-    { icon: Target, label: 'Goals' },
-    { icon: Settings, label: 'Settings' }
-  ];
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
 
-  const quickPrompts = [
-    { icon: Utensils, text: "Create a meal plan for weight loss", category: "Nutrition" },
-    { icon: Dumbbell, text: "Suggest a beginner workout routine", category: "Workout" },
-    { icon: Apple, text: "High protein breakfast ideas", category: "Meal Ideas" },
-    { icon: Target, text: "How to track my macros effectively?", category: "Goals" }
-  ];
+    const userMessage = { role: 'user', content: input };
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+    setChatOpen(true);
 
-  const handleSend = () => {
-    if (!inputValue.trim()) return;
-
-    const userMessage = {
-      id: messages.length + 1,
-      type: 'user',
-      content: inputValue,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    setMessages([...messages, userMessage]);
-    setInputValue('');
-    setIsTyping(true);
-
-    // Simulate bot response
     setTimeout(() => {
-      const botMessage = {
-        id: messages.length + 2,
-        type: 'bot',
-        content: generateResponse(inputValue),
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      const aiResponse = {
+        role: 'assistant',
+        content: getAIResponse(input)
       };
-      setMessages(prev => [...prev, botMessage]);
-      setIsTyping(false);
-    }, 1500);
+      setMessages(prev => [...prev, aiResponse]);
+      setIsLoading(false);
+    }, 1000);
   };
 
-  const generateResponse = (input) => {
-    const lowerInput = input.toLowerCase();
-    
-    if (lowerInput.includes('meal plan') || lowerInput.includes('diet')) {
-      return "I'd be happy to help you create a meal plan! For a balanced approach, I recommend:\n\n🥗 Breakfast: Greek yogurt with berries and granola (450 cal)\n🍗 Lunch: Grilled chicken salad with quinoa (520 cal)\n🍎 Snack: Apple with almond butter (200 cal)\n🥘 Dinner: Salmon with roasted vegetables (580 cal)\n\nThis totals approximately 1,750 calories with a good macro balance. Would you like me to adjust this based on your specific goals?";
-    } else if (lowerInput.includes('workout') || lowerInput.includes('exercise')) {
-      return "Here's a beginner-friendly workout routine:\n\n💪 Monday: Upper Body (Push-ups, Dumbbell rows, Shoulder press)\n🦵 Wednesday: Lower Body (Squats, Lunges, Calf raises)\n🏃 Friday: Cardio & Core (20 min jog, Planks, Bicycle crunches)\n\nStart with 3 sets of 10-12 reps for each exercise. Rest 60 seconds between sets. Would you like more detailed instructions for any of these exercises?";
-    } else if (lowerInput.includes('protein') || lowerInput.includes('macro')) {
-      return "Great question! For optimal fitness results:\n\n🥩 Protein: 0.8-1g per pound of body weight\n🍚 Carbs: 40-50% of total calories\n🥑 Fats: 20-30% of total calories\n\nIf you're 150 lbs aiming for 2000 calories:\n- Protein: 120-150g (480-600 cal)\n- Carbs: 200-250g (800-1000 cal)\n- Fats: 45-67g (400-600 cal)\n\nWould you like help tracking these macros?";
-    } else if (lowerInput.includes('weight loss') || lowerInput.includes('lose weight')) {
-      return "Weight loss fundamentals:\n\n📉 Create a caloric deficit of 300-500 calories daily\n🏋️ Combine cardio (3x/week) with strength training (2x/week)\n💧 Drink 8-10 glasses of water daily\n😴 Get 7-9 hours of sleep\n📊 Track your progress weekly\n\nConsistent small changes lead to sustainable results. What's your current fitness level and target weight?";
+  const getAIResponse = (userInput) => {
+    const lowerInput = userInput.toLowerCase();
+    if (lowerInput.includes('breakfast') || lowerInput.includes('morning')) {
+      return 'Great choice! For breakfast, try overnight oats with chia seeds, banana smoothie bowls, or protein-packed egg muffins. What\'s your preference?';
+    } else if (lowerInput.includes('lunch') || lowerInput.includes('meal')) {
+      return 'For a balanced lunch, consider grilled chicken salad, quinoa buddha bowl, or salmon with roasted vegetables. Need specific recipes?';
+    } else if (lowerInput.includes('calories') || lowerInput.includes('macro')) {
+      return 'I can help calculate your daily nutritional needs! Share your height, weight, age, and activity level for personalized recommendations.';
+    } else if (lowerInput.includes('snack')) {
+      return 'Healthy snack ideas: mixed nuts, apple with almond butter, hummus with veggies, or Greek yogurt with berries. All nutritious and satisfying!';
     } else {
-      return "I'm here to help with your fitness journey! I can assist with:\n\n• Personalized meal planning\n• Workout routines and exercise tips\n• Nutrition and macro tracking\n• Weight loss/gain strategies\n• Supplement recommendations\n\nWhat specific area would you like to focus on today?";
+      return 'I\'m here to help with meal planning, nutrition advice, calorie tracking, and healthy recipes. What would you like to know?';
     }
   };
 
-  const handleQuickPrompt = (promptText) => {
-    setInputValue(promptText);
-  };
+  const categories = [
+    { icon: '💚', text: 'Meal Plans', color: 'bg-emerald-100 text-emerald-700' },
+    { icon: '🍎', text: 'Nutrition', color: 'bg-rose-100 text-rose-700' },
+    { icon: '📊', text: 'Track Calories', color: 'bg-purple-100 text-purple-700' },
+    { icon: '💪', text: 'Fitness Goals', color: 'bg-blue-100 text-blue-700' },
+  ];
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
+  const chatHistory = [
+    'Weekly meal prep ideas',
+    'Protein shake recipes',
+    'Low carb dinner options',
+    'Vitamin supplement guide'
+  ];
 
   return (
-    <div className="min-h-screen bg-neutral-50 flex">
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-neutral-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className="flex items-center justify-between p-6 border-b border-neutral-200">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-neutral-900 rounded-lg flex items-center justify-center">
-              <Flame className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-lg font-light text-neutral-900">FitTrack</span>
-          </div>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-1 rounded-lg hover:bg-neutral-100 transition-colors"
-          >
-            <X className="w-5 h-5 text-neutral-500" />
-          </button>
-        </div>
-        
-        <nav className="p-6 space-y-2">
-          {sidebarItems.map((item, index) => (
-            <button
-              key={index}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
-                item.active 
-                  ? 'bg-neutral-900 text-white' 
-                  : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="font-medium">{item.label}</span>
-            </button>
-          ))}
-        </nav>
-
-        {/* Sidebar Stats */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-neutral-200">
-          <div className="bg-neutral-50 rounded-2xl p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <Sparkles className="w-5 h-5 text-neutral-600" />
-              <span className="text-sm font-medium text-neutral-900">AI Coach Active</span>
-            </div>
-            <p className="text-xs text-neutral-600">
-              Ask me anything about fitness, nutrition, or your goals!
-            </p>
-          </div>
-        </div>
+    <div className="flex h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 overflow-hidden relative">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-300/20 rounded-full filter blur-3xl"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-300/20 rounded-full filter blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-blue-300/20 rounded-full filter blur-3xl"></div>
       </div>
 
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
           onClick={() => setSidebarOpen(false)}
-        />
+        ></div>
       )}
 
-      {/* Main Content */}
-      <div className="flex-1 lg:ml-64 flex flex-col h-screen">
-        {/* Header */}
-        <header className="bg-white border-b border-neutral-200 px-4 lg:px-6 py-4 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-lg hover:bg-neutral-100 transition-colors"
-              >
-                <Menu className="w-5 h-5 text-neutral-600" />
-              </button>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-light text-neutral-900">AI Fitness Coach</h1>
-                <p className="text-sm text-neutral-600 font-light hidden sm:block">Get personalized advice and guidance</p>
-              </div>
-            </div>
+      {/* Sidebar */}
+      <div className={`
+        fixed lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        w-72 h-full bg-white/40 backdrop-blur-2xl border-r border-white/30 flex flex-col z-30 shadow-2xl
+      `}>
+        {/* Close button for mobile */}
+        <button 
+          className="lg:hidden absolute top-4 right-4 p-2 hover:bg-white/50 rounded-xl"
+          onClick={() => setSidebarOpen(false)}
+        >
+          <X className="w-5 h-5 text-gray-700" />
+        </button>
 
-            <div className="flex items-center gap-2 lg:gap-4">
-              <button className="relative p-2 rounded-lg hover:bg-neutral-100 transition-colors">
-                <Bell className="w-5 h-5 text-neutral-600" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
-              </button>
-
-              <div className="relative">
-                <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center gap-2 p-1 rounded-lg hover:bg-neutral-100 transition-colors"
-                >
-                  <div className="w-8 h-8 bg-neutral-200 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-neutral-600" />
-                  </div>
-                  <ChevronDown className="w-4 h-4 text-neutral-400 hidden sm:block" />
-                </button>
-
-                {showUserMenu && (
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-sm border border-neutral-100 py-2 z-50">
-                    <button className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 flex items-center gap-2 transition-colors">
-                      <User className="w-4 h-4" />
-                      Profile
-                    </button>
-                    <button className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 flex items-center gap-2 transition-colors">
-                      <Settings className="w-4 h-4" />
-                      Settings
-                    </button>
-                    <hr className="my-2 border-neutral-100" />
-                    <button className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 flex items-center gap-2 transition-colors">
-                      <LogOut className="w-4 h-4" />
-                      Sign out
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+        {/* Logo */}
+        <div className="p-6 flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+            <Apple className="w-6 h-6 text-white" />
           </div>
-        </header>
+          <h1 className="text-xl font-bold text-gray-800">NUTRI-G</h1>
+        </div>
 
-        {/* Chat Area */}
-        <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-6">
-          <div className="max-w-4xl mx-auto space-y-6">
-            {/* Welcome Section - Only show when no messages */}
-            {messages.length === 1 && (
-              <div className="text-center mb-12">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-neutral-900 rounded-full mb-4">
-                  <Sparkles className="w-8 h-8 text-white" />
-                </div>
-                <h2 className="text-2xl sm:text-3xl font-light text-neutral-900 mb-2">
-                  How can I help you today?
-                </h2>
-                <p className="text-neutral-600 font-light">
-                  Choose a quick prompt or ask me anything about fitness
-                </p>
-              </div>
-            )}
+        {/* Search */}
+        <div className="px-6 mb-4">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search"
+              className="w-full pl-11 pr-4 py-3 bg-white/50 backdrop-blur-sm border-none rounded-2xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300/50"
+            />
+          </div>
+        </div>
 
-            {/* Quick Prompts - Only show at start */}
-            {messages.length === 1 && (
-              <div className="grid sm:grid-cols-2 gap-4 mb-8">
-                {quickPrompts.map((prompt, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleQuickPrompt(prompt.text)}
-                    className="group p-5 bg-white border-2 border-neutral-200 rounded-2xl hover:border-neutral-900 hover:shadow-lg transition-all duration-300 text-left"
+        {/* Menu Items */}
+        <div className="px-4 space-y-1">
+          <button 
+            onClick={() => {
+              setChatOpen(false);
+              setSidebarOpen(false);
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3 bg-white/50 hover:bg-white/70 rounded-2xl transition-all text-gray-700 font-medium text-sm"
+          >
+            <Plus className="w-5 h-5" />
+            New Chat
+          </button>
+          <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/50 rounded-2xl transition-all text-gray-700 font-medium text-sm">
+            <Library className="w-5 h-5" />
+            Library
+          </button>
+          <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/50 rounded-2xl transition-all text-gray-700 font-medium text-sm">
+            <Apple className="w-5 h-5" />
+            My Nutrition
+          </button>
+          <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/50 rounded-2xl transition-all text-gray-700 font-medium text-sm">
+            <FolderOpen className="w-5 h-5" />
+            Meal Plans
+          </button>
+        </div>
+
+        {/* Chat History */}
+        <div className="flex-1 px-4 mt-6 overflow-y-auto">
+          <div className="flex items-center justify-between mb-3 px-2">
+            <h3 className="text-sm font-bold text-gray-700">Chat History</h3>
+            <TrendingUp className="w-4 h-4 text-gray-500" />
+          </div>
+          <div className="space-y-1">
+            {chatHistory.map((chat, idx) => (
+              <button
+                key={idx}
+                className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-white/50 rounded-xl transition-all text-left text-sm text-gray-700"
+              >
+                <Clock className="w-4 h-4 text-gray-400" />
+                <span className="truncate">{chat}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col relative">
+        {/* Mobile Header */}
+        <div className="lg:hidden flex items-center justify-between p-4 bg-white/40 backdrop-blur-xl border-b border-white/30 z-10">
+          <button 
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 hover:bg-white/50 rounded-xl"
+          >
+            <Menu className="w-6 h-6 text-gray-700" />
+          </button>
+          <h1 className="text-lg font-bold text-gray-800">FitTrack</h1>
+          <div className="w-10"></div>
+        </div>
+
+        {/* Chat or Welcome Screen */}
+        {chatOpen ? (
+          /* Chat Interface */
+          <div className="flex-1 flex flex-col">
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-4 py-6 md:px-8">
+              <div className="max-w-3xl mx-auto space-y-4">
+                {messages.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 bg-neutral-50 rounded-xl group-hover:bg-neutral-100 transition-colors">
-                        <prompt.icon className="w-5 h-5 text-neutral-700" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-xs text-neutral-500 font-medium mb-1">{prompt.category}</div>
-                        <div className="text-sm font-medium text-neutral-900">{prompt.text}</div>
+                    <div
+                      className={`max-w-[85%] md:max-w-[70%] px-4 py-3 rounded-2xl ${
+                        msg.role === 'user'
+                          ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                          : 'bg-white/60 backdrop-blur-xl text-gray-800 border border-white/40'
+                      }`}
+                    >
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-white/60 backdrop-blur-xl text-gray-800 border border-white/40 px-4 py-3 rounded-2xl">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                       </div>
                     </div>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Messages */}
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-4 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                {message.type === 'bot' && (
-                  <div className="flex-shrink-0 w-10 h-10 bg-neutral-900 rounded-full flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-white" />
                   </div>
                 )}
-                
-                <div className={`flex flex-col max-w-2xl ${message.type === 'user' ? 'items-end' : 'items-start'}`}>
-                  <div
-                    className={`rounded-2xl px-5 py-4 ${
-                      message.type === 'user'
-                        ? 'bg-neutral-900 text-white'
-                        : 'bg-white border border-neutral-200'
-                    }`}
-                  >
-                    <p className="text-sm sm:text-base whitespace-pre-line leading-relaxed">
-                      {message.content}
-                    </p>
-                  </div>
-                  
-                  <div className="flex items-center gap-3 mt-2 px-2">
-                    <span className="text-xs text-neutral-500 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {message.timestamp}
-                    </span>
-                    
-                    {message.type === 'bot' && (
-                      <div className="flex items-center gap-2">
-                        <button className="p-1 hover:bg-neutral-100 rounded transition-colors">
-                          <ThumbsUp className="w-3 h-3 text-neutral-400" />
-                        </button>
-                        <button className="p-1 hover:bg-neutral-100 rounded transition-colors">
-                          <ThumbsDown className="w-3 h-3 text-neutral-400" />
-                        </button>
-                        <button className="p-1 hover:bg-neutral-100 rounded transition-colors">
-                          <Copy className="w-3 h-3 text-neutral-400" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {message.type === 'user' && (
-                  <div className="flex-shrink-0 w-10 h-10 bg-neutral-200 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-neutral-600" />
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {/* Typing Indicator */}
-            {isTyping && (
-              <div className="flex gap-4 justify-start">
-                <div className="flex-shrink-0 w-10 h-10 bg-neutral-900 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-white" />
-                </div>
-                <div className="bg-white border border-neutral-200 rounded-2xl px-5 py-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-
-        {/* Input Area */}
-        <div className="flex-shrink-0 border-t border-neutral-200 bg-white px-4 lg:px-6 py-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-end gap-3">
-              <div className="flex-1 relative">
-                <textarea
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Ask about nutrition, workouts, or your fitness goals..."
-                  rows="1"
-                  className="w-full px-5 py-4 pr-12 border-2 border-neutral-200 rounded-2xl focus:outline-none focus:border-neutral-900 transition-all duration-200 resize-none text-neutral-900 placeholder-neutral-400"
-                  style={{ minHeight: '56px', maxHeight: '200px' }}
-                />
-                <button
-                  onClick={handleSend}
-                  disabled={!inputValue.trim()}
-                  className="absolute right-3 bottom-3 p-2 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Send className="w-5 h-5" />
-                </button>
+                <div ref={messagesEndRef} />
               </div>
             </div>
-            <p className="text-xs text-neutral-500 mt-3 text-center">
-              AI can make mistakes. Verify important information with healthcare professionals.
-            </p>
+
+            {/* Input Area */}
+            <div className="p-4 md:p-6 mb-2  backdrop-blur-xl border-t border-white/30">
+              <div className="max-w-3xl mx-auto">
+                <div className="bg-white/60 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 p-2">
+                  <div className="flex items-center gap-2">
+                    <button className="p-2 hover:bg-purple-100/50 rounded-xl transition-colors">
+                      <Plus className="w-5 h-5 text-gray-600" />
+                    </button>
+                    <input
+                      type="text"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSend();
+                        }
+                      }}
+                      placeholder="Type your message..."
+                      className="flex-1 py-3 bg-transparent text-gray-800 placeholder-gray-400 focus:outline-none text-sm md:text-base"
+                    />
+                    <button 
+                      onClick={handleSend}
+                      disabled={!input.trim() || isLoading}
+                      className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Send className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        ) : (
+          /* Welcome Screen */
+          <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 overflow-y-auto">
+            <div className="flex flex-col items-center justify-center max-w-4xl w-full">
+              {/* Mascot Character */}
+              <div className="relative mb-6 md:mb-8">
+                <div className="w-40 h-40 md:w-64 md:h-64 bg-transparent rounded-full flex items-center justify-center relative">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-5xl md:text-8xl"><img src="/assets/fruit-salad.png" alt="" /></div>
+                  </div>
+                  <div className="absolute -top-2 -right-2 md:-top-4 md:-right-4 w-8 h-8 md:w-12 md:h-12 bg-pink-400 rounded-full shadow-lg animate-bounce"></div>
+                  <div className="absolute -bottom-1 -left-3 md:-bottom-2 md:-left-6 w-10 h-10 md:w-16 md:h-16 bg-purple-400 rounded-full shadow-lg"></div>
+                </div>
+              </div>
+
+              {/* Welcome Text */}
+              <h2 className="text-2xl md:text-4xl font-bold text-gray-800 mb-6 md:mb-8 text-center px-4">
+                How can I help you today?
+              </h2>
+
+              {/* Input Area */}
+              <div className="w-full max-w-2xl px-4">
+                <div className="bg-white/60 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 p-2">
+                  <div className="flex items-center gap-2">
+                    <button className="p-2 hover:bg-purple-100/50 rounded-xl transition-colors">
+                      <Plus className="w-5 h-5 text-gray-600" />
+                    </button>
+                    <input
+                      type="text"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSend();
+                        }
+                      }}
+                      placeholder="Chat here..."
+                      className="flex-1 py-3 md:py-4 bg-transparent text-gray-800 placeholder-gray-400 focus:outline-none text-sm md:text-base"
+                    />
+                    <button 
+                      onClick={handleSend}
+                      disabled={!input.trim() || isLoading}
+                      className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Send className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Category Pills */}
+                <div className="flex gap-2 md:gap-3 mt-4 md:mt-6 justify-center flex-wrap">
+                  {categories.map((cat, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setInput(cat.text);
+                        handleSend();
+                      }}
+                      className={`flex items-center gap-2 px-3 py-2 md:px-5 md:py-2.5 ${cat.color} rounded-full font-medium text-xs md:text-sm hover:scale-105 transition-transform shadow-md`}
+                    >
+                      <span>{cat.icon}</span>
+                      <span className="hidden sm:inline">{cat.text}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
